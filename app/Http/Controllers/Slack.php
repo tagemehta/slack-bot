@@ -19,7 +19,7 @@ class Slack extends Controller
      */
     public function index()
     {
-        return(response("hi"));
+        return('hi');
     }
 
     /**
