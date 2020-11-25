@@ -38,16 +38,19 @@ return [
         'stack' => [
             'driver' => 'stack',
             'channels' => ['single'],
+            'ignore_exceptions' => false,
         ],
+
         'single' => [
-            'driver' => 'errorlog',
+            'driver' => 'single',
+            'path' => storage_path('logs/laravel.log'),
             'level' => 'debug',
         ],
 
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => 'debug',
             'days' => 14,
         ],
 
