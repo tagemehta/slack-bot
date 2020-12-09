@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Slack;
-use App\Http\Controllers\SlackSetup;
+use App\Http\Controllers\SlackOauth;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,5 +19,8 @@ use App\Http\Controllers\SlackSetup;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/auth', function () {
+    return view('auth');
+});
+Route::get('/auth/redirect', SlackOauth::class);
 Route::resource('/slack', Slack::class);
-Route::resource('/slack/setup', SlackSetup::class);

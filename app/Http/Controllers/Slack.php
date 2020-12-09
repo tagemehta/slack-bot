@@ -78,7 +78,7 @@ class Slack extends Controller
                 "base_uri"=>"https://slack.com",
                 "headers" => [
                     "Content-Type" => "application/json; charset=utf-8",
-                    "Authorization" => "Bearer ". $access_token
+                    "Authorization" => "Bearer ". session('bot_token')
                 ]
             ]); 
             $r = $client->request("POST", "/api/views.open", array (
@@ -136,8 +136,11 @@ class Slack extends Controller
                             "private_metadata" => $thread,
                         ]
                     ] //json end bracket
-                ) //aray end paranthesis
+                )
+                 //aray end paranthesis
             );
+            Log::debug(session('bot_token'));
+            Log::debug(print_r(json_decode($r->getBody()), true));
         }
         else if ($request->header('Content-Type') == 'application/x-www-form-urlencoded' && json_decode($request->all()["payload"])->type == "view_submission"){
             $body = json_decode($request->all()["payload"]);
