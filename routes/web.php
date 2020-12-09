@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Slack;
+use App\Http\Controllers\SlackSetup;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,3 +20,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::resource('/slack', Slack::class);
+Route::resource('/slack/setup', SlackSetup::class);

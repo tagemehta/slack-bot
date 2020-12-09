@@ -21,7 +21,7 @@ class EmailsTable extends Migration
             $table->string('thread_value');
             $table->string('reply_to_address');
             $table->string('email_subject');
-            $table->string('old_email_body');
+            $table->longText('old_email_body');
             $table->string("old_email_date");
             $table->string("old_email_original_address");
         });
