@@ -21,6 +21,7 @@ class CreateSessionsTable extends Migration
             $table->text('payload');
             $table->integer('last_activity')->index();
             $table->text('bot_token');
+            $table->text('access_token');
         });
     }
 
