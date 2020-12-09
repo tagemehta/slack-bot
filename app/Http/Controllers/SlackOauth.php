@@ -31,8 +31,11 @@ class SlackOauth extends Controller
             ]
         ]);
         Log::critical(print_r(json_decode($result->getBody()), true));
-        session(["bot_token" => json_decode($result->getBody())->access_token]);
-        return(response(session('bot_token')));
+        $result_body = json_decode($result->getBody());
+        DB::insert('insert into slack_workspaces (team_id, user_token) values (?, ?)', [$result_body->team->id, $result_body->authed_user->access_token]);
+        $bot_access_token = DB::select("select user_token from slack_workspaces where team_id=?", [$result_body->team->id])[0]->user_token;
+        return $bot_access_token;
+
 
     }
 }

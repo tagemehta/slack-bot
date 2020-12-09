@@ -74,11 +74,14 @@ class Slack extends Controller
             $thread = $body->message->ts;
             $subject_db = DB::select("select email_subject from emails where thread_value=?", [$thread]);
             $email_subject_initial = $subject_db[0]->email_subject;
+            $team_id = $body->team->id;
+            $bot_access_token = DB::select("select user_token from slack_workspaces where team_id=?", [$team_id])[0]->user_token;
+            Log::critical($bot_access_token);
             $client = new Client([
                 "base_uri"=>"https://slack.com",
                 "headers" => [
                     "Content-Type" => "application/json; charset=utf-8",
-                    "Authorization" => "Bearer ". session('bot_token')
+                    "Authorization" => "Bearer ". $bot_access_token
                 ]
             ]); 
             $r = $client->request("POST", "/api/views.open", array (
@@ -139,7 +142,7 @@ class Slack extends Controller
                 )
                  //aray end paranthesis
             );
-            Log::debug(session('bot_token'));
+            Log::debug(session('user_token'));
             Log::debug(print_r(json_decode($r->getBody()), true));
         }
         else if ($request->header('Content-Type') == 'application/x-www-form-urlencoded' && json_decode($request->all()["payload"])->type == "view_submission"){
