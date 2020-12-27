@@ -72,11 +72,11 @@ class Slack extends Controller
             $access_token=env('SLACK_ACCESS_TOKEN');
             $trigger_id_event = $body->trigger_id;
             $thread = $body->message->ts;
-            $subject_db = DB::select("select email_subject from emails where thread_value=?", [$thread]);
-            $email_subject_initial = $subject_db[0]->email_subject;
+            $email_db = DB::select("select email_subject, old_email_body from emails where thread_value=?", [$thread]);
+            $email_subject_initial = $email_db[0]->email_subject;
+            $old_email_body = $email_db[0]->old_email_body;
             $team_id = $body->team->id;
             $bot_access_token = DB::select("select user_token from slack_workspaces where team_id=?", [$team_id])[0]->user_token;
-            Log::critical($bot_access_token);
             $client = new Client([
                 "base_uri"=>"https://slack.com",
                 "headers" => [
@@ -129,7 +129,22 @@ class Slack extends Controller
                                         "type" => "plain_text",
                                         "text" => "Email Body"
                                     ]
-                                ]
+                                    ],
+                                    [
+                                        "block_id" => "my_block_id",
+                                        "type" => "input",
+                                        "optional" => true,
+                                        "label" => [
+                                            "type" => "plain_text",
+                                            "text" => "Select a channel to post the result on"
+                                                                        ],
+                                        "element" => [
+                                            "action_id" => "my_action_id",
+                                            "type" => "conversations_select",
+                                            "response_url_enabled" => true,
+                                            "default_to_current_conversation" => true
+                                        ]
+                                    ]
                                         ], //blocks end bracket
                             "submit" => [
                                 "emoji" => true,
@@ -142,12 +157,13 @@ class Slack extends Controller
                 )
                  //aray end paranthesis
             );
-            Log::debug(session('user_token'));
-            Log::debug(print_r(json_decode($r->getBody()), true));
+            // Log::debug(session('user_token'));
+            // Log::debug(print_r(json_decode($r->getBody()), true));
         }
         else if ($request->header('Content-Type') == 'application/x-www-form-urlencoded' && json_decode($request->all()["payload"])->type == "view_submission"){
             $body = json_decode($request->all()["payload"]);
-            Log::critical(print_r($body, true));
+            // Log::critical($body);
+            // Log::critical(print_r($body, true));
             $thread = $body->view->private_metadata;
             $messages = DB::select('select * from emails where thread_value = ?', [$thread]);
             // Log::critical($messages);
@@ -161,7 +177,50 @@ class Slack extends Controller
                 $email_id = $messages[0]->email_id;
                 $email_subject = $body->view->state->values->email_subject_block->email_subject->value;
                 $email_body = $body->view->state->values->email_body_block->email_body->value;
-                Mail::to($from_email_address)->send(new BaseEmail(["body" => $email_body, "date" => $old_email_date, "old_email" => $old_email_original_address, "old_message" => $old_email_body], $reply_to, $email_id, $email_subject));
+                Mail::to($from_email_address)->send(new BaseEmail(["body" => $email_body
+                , "date" => $old_email_date, "old_email" => $old_email_original_address, "old_message" => $old_email_body
+            ], $reply_to, $email_id, $email_subject));
+            $confirmation_url = $body->response_urls[0]->response_url;
+            $client = new Client([]);
+            $request_body = array(
+                "json" => [
+                    array(
+                        "blocks" => array(
+                            array(
+                                "type" => "context",
+                                "elements" => array(
+                                    array(
+                                        "type" => "plain_text",
+                                        "text" => "From Classrooms.cloud Helpine",
+                                        "emoji" => true
+                                    )
+                                )
+                            ),
+                            array(
+                                "type" => "context",
+                                "elements" => array(
+                                    array(
+                                        "type" => "plain_text",
+                                        "text" => "To $from_email_address",
+                                        "emoji" => true
+                                    )
+                                )
+                            ),
+                            array(
+                                "type" => "section",
+                                "text" => array(
+                                    "type" => "plain_text",
+                                    "text" => "$email_body",
+                                    "emoji" => true
+                                )
+                            )
+                        )
+                    )
+                ]
+                                );
+            
+            $r = $client->request('POST', $confirmation_url, array("json"=> ["text" => "Email Sent to $from_email_address"]));
+            Log::debug(print_r(json_decode($r->getBody()), true));
                 return(response("", 204));
             };
             return(response("", 204));
