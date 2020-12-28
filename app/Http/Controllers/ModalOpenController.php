@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-class MessageActionController extends Controller
+class ModalOpenController extends Controller
 {
     public function open_view (Request $request) {
             Log::info("shortcut event logic");
@@ -16,6 +16,7 @@ class MessageActionController extends Controller
             $access_token=env('SLACK_ACCESS_TOKEN');
             $trigger_id_event = $body->trigger_id;
             $thread = $body->message->ts;
+            $channel_id = $body->channel->id;
             $email_db = DB::select("select email_subject, old_email_body from emails where thread_value=?", [$thread]);
             $email_subject_initial = $email_db[0]->email_subject;
             $old_email_body = $email_db[0]->old_email_body;
@@ -25,7 +26,7 @@ class MessageActionController extends Controller
                 "base_uri"=>"https://slack.com",
                 "headers" => [
                     "Content-Type" => "application/json; charset=utf-8",
-                    "Authorization" => "Bearer ". $bot_access_token
+                    "Authorization" => "Bearer ". env("SLACK_ACCESS_TOKEN")
                 ]
             ]); 
             $r = $client->request("POST", "/api/views.open", array (
@@ -95,13 +96,13 @@ class MessageActionController extends Controller
                                 "text" => "Send Email",
                                 "type" => "plain_text"
                             ],
-                            "private_metadata" => $thread,
+                            "private_metadata" => "$thread,$channel_id"
                         ]
                     ] //json end bracket
                 )
                  //aray end paranthesis
             );
-            // Log::debug(session('user_token'));
-            // Log::debug(print_r(json_decode($r->getBody()), true));
-    }
+            Log::info(print_r(json_decode($r->getBody()), true));
+            
+        }
 }

@@ -10,13 +10,16 @@ use Illuminate\Support\Facades\DB;
 use Mail;
 use App\Mail\BaseEmail;
 
+
 class EmailSendController extends Controller
 {
     public function send(Request $request) {
         $body = json_decode($request->all()["payload"]);
         // Log::critical($body);
         // Log::critical(print_r($body, true));
-        $thread = $body->view->private_metadata;
+        $exploded_pm = explode(",", $body->view->private_metadata);
+        $thread = $exploded_pm[0];
+        $channel_id = $exploded_pm[1];
         $messages = DB::select('select * from emails where thread_value = ?', [$thread]);
         // Log::critical($messages); 
         if (empty($messages[0]) == false) {
@@ -24,7 +27,14 @@ class EmailSendController extends Controller
             $old_email_body = $messages[0] ->old_email_body;
             $old_email_original_address = $messages[0] ->old_email_original_address;
             $from_email_address = $messages[0]->from_email_address;
-            $reply_to = $messages[0]->reply_to_address;
+            if (null != $reply_to = $messages[0]->reply_to_address) {
+                $reply_to = $messages[0]->reply_to_address;
+            } else {
+                $channel_db = DB::select("SELECT * FROM channels WHERE channel_id = ?;", [$channel_id]);
+                Log::debug($channel_id);
+                Log::debug(print_r($channel_db, true));
+                $reply_to = $channel_db[0]->slack_email_address;
+            }
             $subject = $messages[0]->email_subject;
             $email_id = $messages[0]->email_id;
             $email_subject = $body->view->state->values->email_subject_block->email_subject->value;

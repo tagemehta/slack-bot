@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class ModalThread extends Migration
+class AddConfigureMessageSentToChannels extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,9 @@ class ModalThread extends Migration
      */
     public function up()
     {
-        
-        if (!(Schema::hasTable("modal_thread"))) {
-            Schema::create('modal_thread', function(Blueprint $table) {
-                $table->string('thread_value');
-                $table->string('modal_secret');
-            });
-        }
+        Schema::table('channels', function (Blueprint $table) {
+            $table->boolean("config_message_sent")->nullable();
+        });
     }
 
     /**
@@ -29,6 +25,8 @@ class ModalThread extends Migration
      */
     public function down()
     {
-        //
+        Schema::table('channels', function (Blueprint $table) {
+            //
+        });
     }
 }

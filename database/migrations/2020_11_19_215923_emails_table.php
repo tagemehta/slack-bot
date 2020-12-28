@@ -13,6 +13,7 @@ class EmailsTable extends Migration
      */
     public function up()
     {
+        if (!(Schema::hasTable("emails"))) {
         Schema::create('emails', function(Blueprint $table) {
             $table->id();
             $table->string('from_email_address');
@@ -25,6 +26,7 @@ class EmailsTable extends Migration
             $table->string("old_email_date");
             $table->string("old_email_original_address");
         });
+    }
     }
 
     /**

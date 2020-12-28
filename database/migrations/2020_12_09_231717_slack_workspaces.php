@@ -13,10 +13,12 @@ class SlackWorkspaces extends Migration
      */
     public function up()
     {
-        Schema::create('slack_workspaces', function(Blueprint $table) {
-            $table->string('team_id');
-            $table->string('user_token');
-        });
+        if (!(Schema::hasTable("slack_workspaces"))) {
+            Schema::create('slack_workspaces', function(Blueprint $table) {
+                $table->string('team_id');
+                $table->string('user_token');
+            });
+        }
     }
 
     /**
