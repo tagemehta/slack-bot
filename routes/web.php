@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Slack;
 use App\Http\Controllers\SlackOauth;
+use App\Http\Controllers\EmailParseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,4 +24,5 @@ Route::get('/auth', function () {
     return view('auth');
 });
 Route::get('/auth/redirect', SlackOauth::class);
-Route::resource('/slack', Slack::class);
+Route::apiResource('/slack', Slack::class);
+// Route::apiResource("emailParse", EmailParseController::class);
