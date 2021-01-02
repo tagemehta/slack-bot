@@ -37,15 +37,18 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single'],
+            'channels' => ['heroku'],
             'ignore_exceptions' => false,
         ],
 
         'single' => [
-            // 'driver' => 'errorlog',
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
             'level' => 'debug',
+        ],
+        'heroku' => [
+            'driver' => 'errorLog',
+            'level' => 'debug'
         ],
 
         'daily' => [
