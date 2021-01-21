@@ -42,7 +42,11 @@ class SlackOauth extends Controller
         ], ["team_id"], ["bot_token"]);;
     
         $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
-        return $bot_access_token;
+        if ($bot_access_token) {
+            return "success";
+        } else {
+            return "failure";
+        }
 
 
     }
