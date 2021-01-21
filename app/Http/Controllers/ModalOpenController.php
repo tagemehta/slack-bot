@@ -13,7 +13,7 @@ class ModalOpenController extends Controller
     public function open_view (Request $request) {
             Log::info("shortcut event logic");
             $body = json_decode($request->all()["payload"]);
-            $access_token=env('SLACK_ACCESS_TOKEN');
+            
             $trigger_id_event = $body->trigger_id;
             $thread = $body->message->ts;
             $channel_id = $body->channel->id;
@@ -21,12 +21,12 @@ class ModalOpenController extends Controller
             $email_subject_initial = $email_db[0]->email_subject;
             $old_email_body = $email_db[0]->old_email_body;
             $team_id = $body->team->id;
-            $bot_access_token = DB::select("select user_token from slack_workspaces where team_id=?", [$team_id])[0]->user_token;
+            $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
             $client = new Client([
                 "base_uri"=>"https://slack.com",
                 "headers" => [
                     "Content-Type" => "application/json; charset=utf-8",
-                    "Authorization" => "Bearer ". env("SLACK_ACCESS_TOKEN")
+                    "Authorization" => "Bearer ". $bot_access_token
                 ]
             ]); 
             $r = $client->request("POST", "/api/views.open", array (

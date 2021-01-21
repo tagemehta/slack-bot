@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\retrieveToken;
+
 class SlackOauth extends Controller
 {
     /**
@@ -22,6 +24,7 @@ class SlackOauth extends Controller
             "base_uri" => "https://slack.com/api/"
         ]);
         $code = $request->query('code');
+        Log::debug($code);
         $result = $client->post("oauth.v2.access", [
             "form_params" => [
                 "code" => $code,
@@ -30,10 +33,15 @@ class SlackOauth extends Controller
                 "redirect_uri" => env("SLACK_REDIRECT_URI")
             ]
         ]);
-        Log::critical(print_r(json_decode($result->getBody()), true));
+        Log::debug(print_r(json_decode($result->getBody()), true));
         $result_body = json_decode($result->getBody());
-        DB::insert('insert into slack_workspaces (team_id, user_token) values (?, ?)', [$result_body->team->id, $result_body->authed_user->access_token]);
-        $bot_access_token = DB::select("select user_token from slack_workspaces where team_id=?", [$result_body->team->id])[0]->user_token;
+        $team_id =  $result_body->team->id;
+        $bot_token = $result_body->access_token;
+        DB::table("slack_workspaces")->upsert([
+            ["team_id" => $team_id, "bot_token" => strval($bot_token)]
+        ], ["team_id"], ["bot_token"]);;
+    
+        $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
         return $bot_access_token;
 
 

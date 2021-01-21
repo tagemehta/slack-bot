@@ -22,7 +22,7 @@ class ConfigController extends Controller {
             };
             Log::debug("False");
             // $bot_access_token = DB::select("select user_token from slack_workspaces where team_id=?", [$team_id])[0]->user_token;
-            $bot_access_token = env("SLACK_ACCESS_TOKEN");
+            $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
             $client = new Client([]);
             Log::debug($bot_access_token);
             Log::debug($team_id);
@@ -46,6 +46,7 @@ class ConfigController extends Controller {
         $body = json_decode($request->all()["payload"]);
         $channel_id = $body->channel->id;
         $trigger_id = $body->trigger_id;
+        $team_id = $body->team->id;
         $mc_block = array(
             "trigger_id" => $trigger_id,
             "view" => [
@@ -97,14 +98,15 @@ class ConfigController extends Controller {
                     )
                 )
                         ),
-                "private_metadata" => $channel_id
+                "private_metadata" => "$channel_id,$team_id"
             ]
         );
+        $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
         $client = new Client([
             "base_uri"=>"https://slack.com",
             "headers" => [
                 "Content-Type" => "application/json; charset=utf-8",
-                "Authorization" => "Bearer ". env("SLACK_ACCESS_TOKEN")
+                "Authorization" => "Bearer ". $bot_access_token
             ]
         ]); 
         $r = $client->request("POST", "/api/views.open", 
@@ -117,9 +119,13 @@ class ConfigController extends Controller {
             $client = new Client([]);
             $body = json_decode($request->all()["payload"]);
             $trigger_id = $body->trigger_id;
-            $channel_id = $body->view->private_metadata;
+            
+            $channel_id = explode("," , $body->view->private_metadata)[0];
+            
+            $team_id = explode("," , $body->view->private_metadata)[1];
+            Log::debug($team_id);
             $view_id = $body->view->id;
-            $bot_access_token = env("SLACK_ACCESS_TOKEN");
+            $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
             $request_body = array(
                 "response_action" => "update",
                 "view_id" => $view_id,
