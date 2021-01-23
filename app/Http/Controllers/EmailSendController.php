@@ -27,14 +27,19 @@ class EmailSendController extends Controller
             $old_email_body = $messages[0] ->old_email_body;
             $old_email_original_address = $messages[0] ->old_email_original_address;
             $from_email_address = $messages[0]->from_email_address;
-            if (null != $reply_to = $messages[0]->reply_to_address) {
+            $channel_db = DB::table("channels")
+                    ->join('slack_workspaces', 'channels.team_id', '=', 'slack_workspaces.team_id')
+                    ->where('channel_id', '=', $channel_id )
+                    ->get();
+            
+            if (null != $messages[0]->reply_to_address) {
                 $reply_to = $messages[0]->reply_to_address;
             } else {
-                $channel_db = DB::select("SELECT * FROM channels WHERE channel_id = ?;", [$channel_id]);
-                Log::debug($channel_id);
                 Log::debug(print_r($channel_db, true));
                 $reply_to = $channel_db[0]->slack_email_address;
             }
+            Log::debug(print_r($channel_db[0], true));
+
             $subject = $messages[0]->email_subject;
             $email_id = $messages[0]->email_id;
             $email_subject = $body->view->state->values->email_subject_block->email_subject->value;
@@ -82,7 +87,21 @@ class EmailSendController extends Controller
                             );
         
         $r = $client->request('POST', $confirmation_url, array("json"=> ["text" => "Email Sent to $from_email_address"]));
-        Log::debug(print_r(json_decode($r->getBody()), true));
+
+        $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$channel_db[0]->team_id])[0]->bot_token;
+        $l = $client->request("POST", "https://slack.com/api/reactions.add", [
+            "headers" => [
+                "Authorization" => "Bearer $bot_access_token",
+                "Content-Type" => "application/json"
+            ],
+            "json" => [
+                "channel" => $channel_id,
+                "timestamp" => $thread,
+                "name" => "white_check_mark"
+
+            ]
+        ]);
+
             return(response("", 204));
         };
         return(response("", 204));
