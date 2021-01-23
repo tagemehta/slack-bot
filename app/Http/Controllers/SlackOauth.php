@@ -25,14 +25,16 @@ class SlackOauth extends Controller
         ]);
         $code = $request->query('code');
         Log::debug($code);
-        $result = $client->post("oauth.v2.access", [
+        $fParams = [
             "form_params" => [
                 "code" => $code,
                 "client_id" => env("SLACK_CLIENT_ID"),
                 "client_secret" => env("SLACK_CLIENT_SECRET"),
                 "redirect_uri" => env("SLACK_REDIRECT_URI")
             ]
-        ]);
+            ];
+            Log::debug($fParams);
+        $result = $client->post("oauth.v2.access", $fParams);
         Log::debug(print_r(json_decode($result->getBody()), true));
         $result_body = json_decode($result->getBody());
         $team_id =  $result_body->team->id;
