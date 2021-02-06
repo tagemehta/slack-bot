@@ -30,6 +30,7 @@ class EmailSendController extends Controller
         $exploded_pm = explode(",", $body->view->private_metadata);
         $thread = $exploded_pm[0];
         $channel_id = $exploded_pm[1];
+        $user = $body->user->name;
         $messages = DB::select('select * from emails where thread_value = ?', [$thread]);
         // Log::critical($messages); 
         if (empty($messages[0]) == false) {
@@ -129,7 +130,7 @@ class EmailSendController extends Controller
             "json" => [
                 "channel" => $channel_id,
                 "thread_ts" => $thread,
-                "text" => $email_body
+                "text" => "From $user: $email_body"
 
             ]
         ]);
