@@ -121,6 +121,18 @@ class EmailSendController extends Controller
 
             ]
         ]);
+        $c = $l = $client->request("POST", "https://slack.com/api/chat.postMessage", [
+            "headers" => [
+                "Authorization" => "Bearer $bot_access_token",
+                "Content-Type" => "application/json"
+            ],
+            "json" => [
+                "channel" => $channel_id,
+                "thread_ts" => $thread,
+                "text" => $email_body
+
+            ]
+        ]);
 
             return(response("", 204));
         };
