@@ -13,6 +13,16 @@ use App\Mail\BaseEmail;
 
 class EmailSendController extends Controller
 {
+    protected static function pg_array_parse($literal)
+    {
+        if ($literal == '') return;
+        preg_match_all('/(?<=^\{|,)(([^,"{]*)|\s*"((?:[^"\\\\]|\\\\(?:.|[0-9]+|x[0-9a-f]+))*)"\s*)(,|(?<!^\{)(?=\}$))/i', $literal, $matches, PREG_SET_ORDER);
+        $values = [];
+        foreach ($matches as $match) {
+            $values[] = $match[3] != '' ? stripcslashes($match[3]) : (strtolower($match[2]) == 'null' ? null : $match[2]);
+        }
+        return $values;
+    }
     public function send(Request $request) {
         $body = json_decode($request->all()["payload"]);
         // Log::critical($body);
@@ -32,21 +42,31 @@ class EmailSendController extends Controller
                     ->where('channel_id', '=', $channel_id )
                     ->get();
             
-            if (null != $messages[0]->reply_to_address) {
+            if (!!$messages[0]->reply_to_address) {
                 $reply_to = $messages[0]->reply_to_address;
+                Log::debug("1");
             } else {
                 Log::debug(print_r($channel_db, true));
                 $reply_to = $channel_db[0]->slack_email_address;
+                Log::debug("2");
             }
-            Log::debug(print_r($channel_db[0], true));
+            $ccList = [];
+            if (null != $messages[0]->cc) {
+                $ccList = self::pg_array_parse($messages[0]->cc);
+            }
+            Log::debug($ccList);
+            // Log::debug(print_r($channel_db[0], true));
 
             $subject = $messages[0]->email_subject;
             $email_id = $messages[0]->email_id;
             $email_subject = $body->view->state->values->email_subject_block->email_subject->value;
             $email_body = $body->view->state->values->email_body_block->email_body->value;
-            Mail::to($from_email_address)->send(new BaseEmail(["body" => $email_body
+            Mail::to($from_email_address)
+                ->cc($ccList)
+                ->send(new BaseEmail(["body" => $email_body
             , "date" => $old_email_date, "old_email" => $old_email_original_address, "old_message" => $old_email_body
         ], $reply_to, $email_id, $email_subject));
+        Log::debug("1");
         $confirmation_url = $body->response_urls[0]->response_url;
         $client = new Client([]);
         $request_body = array(

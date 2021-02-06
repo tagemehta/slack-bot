@@ -7,6 +7,21 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 class EmailParseController extends Controller
 {
+    protected static function to_pg_array($set) {
+        settype($set, 'array'); // can be called with a scalar or array
+        $result = array();
+        foreach ($set as $t) {
+            if (is_array($t)) {
+                $result[] = to_pg_array($t);
+            } else {
+                $t = str_replace('"', '\\"', $t); // escape double quote
+                if (! is_numeric($t)) // quote only non-numeric values
+                    $t = '"' . $t . '"';
+                $result[] = $t;
+            }
+        }
+        return '{' . implode(",", $result) . '}'; // format
+    }
     public function store(Request $request)
     {
         
@@ -17,6 +32,19 @@ class EmailParseController extends Controller
             $from_email = $body[0]["headers"]["reply_to"];
         } else {
             $from_email = $body[0]['from'][0]["address"];
+        }
+        $ccList = [];
+        if ($body[0]['cc']) {
+            $ccArr = $body[0]['cc'];
+            foreach($ccArr as $ccAddress) {
+                array_push($ccList, $ccAddress["address"]);
+            }
+            
+        }
+        $fromArr = $body[0]['from'];
+        array_shift($fromArr);
+        foreach($fromArr as $ccAddress) {
+            array_push($ccList, $ccAddress["address"]);
         }
         $old_email_original_address = $from_email;
         $old_email_body = $body[0]["plain_text"];
@@ -30,7 +58,7 @@ class EmailParseController extends Controller
             $subject = "";
         };
         Log::critical($subject);
-        DB::insert('insert into emails (from_email_address, email_id, thread_value, reply_to_address, email_subject, old_email_body, old_email_date, old_email_original_address) values (?, ?, ?, ?, ?, ?, ?, ?)', [$from_email, $email_id, $thread_ts, $reply_to_address, $subject, $old_email_body, $old_email_date_original, $old_email_original_address]);
+        DB::insert('insert into emails (from_email_address, email_id, thread_value, reply_to_address, email_subject, old_email_body, old_email_date, old_email_original_address, cc) values (?, ?, ?, ?, ?, ?, ?, ?,?)', [$from_email, $email_id, $thread_ts, $reply_to_address, $subject, $old_email_body, $old_email_date_original, $old_email_original_address, self::to_pg_array($ccList)]);
         return(response("", 204));
     }
 }
