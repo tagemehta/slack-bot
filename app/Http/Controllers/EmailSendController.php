@@ -29,14 +29,15 @@ class EmailSendController extends Controller
         // Log::critical(print_r($body, true));
         $exploded_pm = explode(",", $body->view->private_metadata);
         $thread = $exploded_pm[0];
+        
         $channel_id = $exploded_pm[1];
         $user = $body->user->name;
         $messages = DB::select('select * from emails where thread_value = ?', [$thread]);
-        // Log::critical($messages); 
+        Log::critical(empty($messages[0])); 
         if (empty($messages[0]) == false) {
             $old_email_date = $messages[0] ->old_email_date;
             $old_email_body = $messages[0] ->old_email_body;
-            $old_email_original_address = $messages[0] ->old_email_original_address;
+            $old_email_original_address = $messages[0]->old_email_original_address;
             $from_email_address = $messages[0]->from_email_address;
             $channel_db = DB::table("channels")
                     ->join('slack_workspaces', 'channels.team_id', '=', 'slack_workspaces.team_id')
@@ -55,13 +56,13 @@ class EmailSendController extends Controller
             if (null != $messages[0]->cc) {
                 $ccList = self::pg_array_parse($messages[0]->cc);
             }
-            Log::debug($ccList);
             // Log::debug(print_r($channel_db[0], true));
 
             $subject = $messages[0]->email_subject;
             $email_id = $messages[0]->email_id;
             $email_subject = $body->view->state->values->email_subject_block->email_subject->value;
             $email_body = $body->view->state->values->email_body_block->email_body->value;
+            
             Mail::to($from_email_address)
                 ->cc($ccList)
                 ->send(new BaseEmail(["body" => $email_body
