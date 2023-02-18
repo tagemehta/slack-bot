@@ -21,6 +21,7 @@ class ModalOpenController extends Controller
             $email_subject_initial = $email_db[0]->email_subject;
             $old_email_body = $email_db[0]->old_email_body;
             $team_id = $body->team->id;
+            Log::debug($team_id);
             $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
             $client = new Client([
                 "base_uri"=>"https://slack.com",

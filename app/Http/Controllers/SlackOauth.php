@@ -41,7 +41,7 @@ class SlackOauth extends Controller
         $bot_token = $result_body->access_token;
         DB::table("slack_workspaces")->upsert([
             ["team_id" => $team_id, "bot_token" => strval($bot_token)]
-        ], ["team_id"], ["bot_token"]);;
+        ], ["team_id"], ["bot_token"]);
     
         $bot_access_token = DB::select("select bot_token from slack_workspaces where team_id=?", [$team_id])[0]->bot_token;
         if ($bot_access_token) {

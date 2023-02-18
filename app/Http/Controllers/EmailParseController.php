@@ -12,7 +12,7 @@ class EmailParseController extends Controller
         $result = array();
         foreach ($set as $t) {
             if (is_array($t)) {
-                $result[] = to_pg_array($t);
+                $result[] = self::to_pg_array($t);
             } else {
                 $t = str_replace('"', '\\"', $t); // escape double quote
                 if (! is_numeric($t)) // quote only non-numeric values
