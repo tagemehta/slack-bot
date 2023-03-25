@@ -50,7 +50,7 @@ class Slack extends Controller
                     "challenge" => $request->input("challenge")
                 ]
                 )
-                            ->header('Content Type', 'Application/json');
+                            ->header('Content-Type', 'application/json');
             
         } else if ($request->input('event.files.0.filetype') == "email"){
             Log::debug("Save Email");
